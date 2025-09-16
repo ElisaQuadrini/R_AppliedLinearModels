@@ -1,0 +1,2 @@
+# Usage-of-R-exploratory-analysis-and-data-imputation-RMarkdown-file-
+This assignment, from the Applied Linear Models course (Jan–Mar 2025), describes missing value imputation. I applied mean/median substitution based on variable distribution. Although single imputation underestimates variability, it ensured a consistent dataset as it is shown graphically in the "Missing Values" paragraph of the attached file.
