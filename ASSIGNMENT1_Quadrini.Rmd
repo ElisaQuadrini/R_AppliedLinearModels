@@ -200,9 +200,6 @@ for (var in vars) {
 }
 ```
 
-
-
-
 Here we can see the marginal distribution of the single covariates and the response with respect to the dummy variable "Area"; we notice that some distribution are slightly different, but we need to take in count that the population of these areas is not equal.
 
 Now we can inspect the correlation between the variables and the response through the matrix of sample correlation:
@@ -251,48 +248,6 @@ When we fit a model with an interaction term and a dummy variable, like in this 
 
 
 
-### Interpreting the parameters
-
-The intercept:
-```{r, echo=FALSE}
-coef(ols_centered)[1]
-```
-The intercept represents the expected number of women graduating in STEM fields in the reference category ("est") when all other predictor variables are at their mean values (since we centered the continuous predictors).
-It provides a baseline estimate of the number of women in STEM in the eastern region, assuming the average conditions for all other variables.
-
-Areanord = 1,913: in the North, the number of women in STEM is expected to be 1,913 higher than in the East. However, the p-value (0.224) suggests this is not statistically significant.
-
-Areaovest = -950.9: in the West, the number of women in STEM is 950 fewer than in the East, but this effect is also not significant (p = 0.484).
-
-Areasud = -385.5: in the South, there are 385 fewer women than in the East, and this effect is also not significant (p = 0.839).
-
-The regional differences in STEM graduates are not statistically significant, except for Areanord, which shows a moderate increase.
-
-
-Values of the Public Education Expenditure:
-```{r, echo = FALSE}
-coef(ols_centered)[16]
-```
-
-The estimate suggests that a 1 million increase in public education spending in the east is associated with an increase of only 0.012 women in STEM, which is negligible.
-The p-value (0.805) confirms that this effect is not statistically significant.
-
-Public education spending, in general, does not appear to have a strong direct impact on STEM graduation rates.
-
-Interaction Between Region and Public Education Expenditure:
-
-Areanord:Public_Edu_Exp.Mln. (-0.0696):
-in the North, the effect of public education spending is slightly negative, but not significant (p = 0.327).
-
-Areaovest:Public_Edu_Exp.Mln. (0.001118):
-in the West, the interaction effect is very close to zero, and not significant (p = 0.984).
-
-Areasud:Public_Edu_Exp.Mln. (0.1716):
-in the South, the effect of public education spending is positive and significant (p = 0.004).
-
-Public education spending has a significant effect only in the South, where higher investment correlates with more women in STEM.
-
-
 ### Graphical presentation of the model:
 
 We can notice in the graphic below that the points are well explained by the red line, which is the regression line created by our model.
@@ -314,108 +269,4 @@ abline(lm(women_all$Tertiary_Edu_STEM ~ fitted_values), col = "red", lwd = 2)
 
 
 ```
-
-### Sigma and R-Squared
-
-```{r}
-print(summary(ols_centered)$sigma)
-```
-
-```{r}
-r_squared <- summary(ols_centered)$r.squared
-adj_r_squared <- summary(ols_centered)$adj.r.squared
-print(c(R2 = r_squared, Adjusted_R2 = adj_r_squared))
-```
-Sigma (Residual Standard Error):
-this is the average prediction error of the model. 
-
-Multiple R-squared = 0.9197 
-this indicates that 92% of the variability in STEM graduates is explained by the model. 
-
-Adjusted R-squared = 0.9045 (90.4%)
-It accounts for the number of predictors. Since it is very close to R-squared, it confirms that the model is not overfitting and remains reliable.
-
-The model explains most of the data’s variability with acceptable prediction errors.
-The small difference between R-squared and Adjusted R-squared indicates a well-balanced model.
-
-
-## Testing the betas
-
-
-```{r, echo=FALSE}
-# coefficients from the model
-coefs <- summary(ols_centered)$coefficients[1:4,]
-
-for (i in 1:nrow(coefs)) {
-  beta_name <- rownames(coefs)[i]
-  estimate <- coefs[i, 1]
-  t_value <- coefs[i, 3]
-  p_value_two_sided <- coefs[i, 4]  # p-value per test a due code
-  
-  #test based on the estimate's sign
-  if (estimate > 0) {
-    p_value_one_sided <- p_value_two_sided / 2  # Test H1: beta > 0
-    direction <- "H1: beta > 0"
-  } else {
-    p_value_one_sided <- 1 - (p_value_two_sided / 2)  # Test H1: beta < 0
-    direction <- "H1: beta < 0"
-  }
-  
-  #print 
-  cat("\nCoefficient:", beta_name)
-  cat("\n  Estimate:", estimate)
-  cat("\n  t-value:", t_value)
-  cat("\n  p-value (two-sided):", p_value_two_sided)
-  cat("\n  p-value (one-sided,", direction, "):", p_value_one_sided)
-  cat("\n")
-}
-
-```
-This can be iterated for all the estimates of the beta_j.
-
-We performed one-sided hypothesis tests based on the sign of each estimated coefficient (beta_j). If beta_j > 0, we tested H1: beta_j > 0; if beta_j < 0, we tested H1: beta_j < 0, ensuring that the alternative hypothesis aligns with the estimated effect's direction.
-
-This is the single t-test, an hypothesis test with the null hypothesis equal to beta_j=0. It evaluates the significance of each variable in the construction of the model; if the p-value is high, it means that the variable is not so significant in the estimate of the response, but it could be significant with respect to interactions with the other variables.
-
-
-## Test of a group of predictors
-
-We now test the full model with all the predictors against a reduced model without the interaction term and all that predictors whose p-value of the single t-test indicated a not so relevant influence in the model: 
-
-```{r, echo=FALSE}
-reduced_model = lm(Tertiary_Edu_STEM ~. - Public_Edu_Exp.Mln. - Early_Childhood_Edu - Employment_Rates_Recent - Unexpected_Financial_Exp, data = women_all)
-anova(reduced_model, ols)
-```
-If the p-value < 0.05, we reject the null hypothesis, meaning that the eliminated variables jointly have a significant effect.
-
-
-
-## Prediction of the response
-
-```{r}
-# New dataset with hypothetical new values of the predictors
-newdata <- data.frame(
-  Area = "nord", 
-  Public_Edu_Exp.Mln. = 900,  
-  Early_Childhood_Edu = 80,
-  At_Most_Lower_Sec_Edu.25.34. = 30,
-  At_Most_Lower_Sec_Edu.35.44. = 25,
-  At_Least_Upper_Sec_Edu.20.24. = 40,
-  At_Least_Upper_Sec_Edu.25.64. = 35,
-  Tertiary_Edu_Attain = 50,
-  Employment_Rates_Recent = 70,
-  Enrolled_From_Abroad.STEM. = 15,
-  Fem_Teachers_Tertiary_Edu = 45,
-  Unexpected_Financial_Exp = 20,
-  Average_Weakly_Hrs_Work = 38
-)
-
-# Interval of prediction at level 95%
-predict(ols_centered, newdata = newdata, interval = "prediction", level = 0.95)
-
-```
-
-The range of prediction is the value upr-lwr; it is big but it aligns with the unit of measures of the response, so it can be a good prediction.
-The value "fit" represents the new prediction of the response.
-
 
